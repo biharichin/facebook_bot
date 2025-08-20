@@ -5,9 +5,10 @@ import json
 import os
 
 # --- CONFIGURATION ---
-# PASTE YOUR FACEBOOK PAGE ID AND PAGE ACCESS TOKEN HERE
-PAGE_ID = "717719538097140"
-PAGE_ACCESS_TOKEN = "EAAOrNnT1OWABPFw4ZBQjXcqhQqnEI4EYhNeAIpUc8aTgZBAsHpRF7IXrPv6OSKw4JH15Nf0Oxf6dnqs2ye8SmUn7d3xMMb4K5pT0iVu1cJ98N0LrbdnqPT1RsRTX7ovFZBrWwBnlARbZCjzq7KvHDOESfZA887d5n5HchpFNUQ9Rby2MtnEpJpeTynaJLlw3YQ5vAxEwgjFSw9OAKPTfUAAxgnWcoOg7zAMcbDfMf0loZD"
+# The script will get these values from your GitHub Secrets
+PAGE_ID = os.getenv("PAGE_ID")
+PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
+GOOGLE_SHEETS_CREDENTIALS_JSON = os.getenv("GOOGLE_SHEETS_CREDENTIALS_JSON")
 
 # The name of your Google Sheet file
 GOOGLE_SHEET_NAME = "english vocab" # Make sure to name your sheet this, or change this value
