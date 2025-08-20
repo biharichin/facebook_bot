@@ -41,7 +41,8 @@ def get_google_sheet_data():
     try:
         # Decode the base64 secret and then parse the JSON
         decoded_creds = base64.b64decode(GOOGLE_SHEETS_CREDENTIALS_JSON)
-        credentials = json.loads(decoded_creds)
+        decoded_creds_text = decoded_creds.decode('utf-8')
+        credentials = json.loads(decoded_creds_text)
         gc = gspread.service_account_from_dict(credentials)
         
         # Open the sheet by its name
