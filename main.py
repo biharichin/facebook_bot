@@ -34,11 +34,14 @@ GOOGLE_SHEETS_CREDENTIALS_JSON = '''
 # File to store the index of the last word posted
 PROGRESS_FILE = "progress.txt"
 
+import base64
+
 def get_google_sheet_data():
     """Connects to Google Sheets and fetches the vocabulary data."""
     try:
-        # The gspread library uses the JSON string directly
-        credentials = json.loads(GOOGLE_SHEETS_CREDENTIALS_JSON)
+        # Decode the base64 secret and then parse the JSON
+        decoded_creds = base64.b64decode(GOOGLE_SHEETS_CREDENTIALS_JSON)
+        credentials = json.loads(decoded_creds)
         gc = gspread.service_account_from_dict(credentials)
         
         # Open the sheet by its name
