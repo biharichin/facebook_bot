@@ -123,26 +123,9 @@ def generate_question(word_data, all_data):
 def main():
     """Main function to run the bot."""
     print("Bot starting...")
-    all_data = get_google_sheet_data()
-    if not all_data:
-        print("Could not fetch data. Exiting.")
-        return
-
-    current_index = get_progress()
-    if current_index >= len(all_data):
-        print("All words have been posted. Resetting progress.")
-        save_progress(0)
-        post_to_facebook_page("We have completed our vocabulary list! The cycle will now start over. Keep learning!")
-        return
-
-    word_to_post = all_data[current_index]
-    message = generate_question(word_to_post, all_data)
-    print(f"Generated Post:\n---\n{message}\n---")
-    
-    result = post_to_facebook_page(message)
-    if result:
-        save_progress(current_index + 1)
-        print(f"Successfully posted word #{current_index + 1}: {word_to_post.get('Word')}")
+    print("Running in test mode...")
+    post_to_facebook_page("Hello from my bot! This is a test.")
+    print("Test finished.")
 
 if __name__ == "__main__":
     main()
