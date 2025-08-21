@@ -14,6 +14,20 @@ GOOGLE_SHEET_NAME = "english vocab"
 PROGRESS_FILE = "progress.json"
 QUIZ_STATE_FILE = "quiz_state.json"
 
+# --- Text Formatting Utility ---
+def to_bold(text):
+    """Converts a string to bold Unicode characters."""
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    bold = "𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵"
+    res = ""
+    for char in text:
+        idx = normal.find(char)
+        if idx != -1:
+            res += bold[idx]
+        else:
+            res += char
+    return res
+
 # --- Google Sheets Setup ---
 def get_google_sheet():
     """Connects to Google Sheets and returns the worksheet."""
@@ -173,7 +187,7 @@ def generate_and_post_mcqs(all_data):
             random.shuffle(options)
             
             quiz_questions.append({
-                "question_text": f"Q{question_number}: What is/are the {q_type.lower()} of \"{word}\"?",
+                "question_text": to_bold(f"Q{question_number}: What is/are the {q_type.lower()} of \"{word}\"?"),
                 "options": options,
                 "correct_answer_text": correct_answer
             })
@@ -184,7 +198,7 @@ def generate_and_post_mcqs(all_data):
         return
 
     # Format for Facebook post
-    post_parts = ["Here is your quiz!\n"]
+    post_parts = [to_bold("Here is your quiz!") + "\n"]
     for q in quiz_questions:
         options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(q["options"])])
         post_parts.append(f"{q['question_text']}\n{options_str}")
@@ -204,7 +218,7 @@ def post_mcq_answers():
         print("No quiz state found. Cannot post answers.")
         return
 
-    post_parts = ["Here are the answers!\n"]
+    post_parts = [to_bold("Here are the answers!") + "\n"]
     for i, q in enumerate(quiz_state):
         post_parts.append(f"A{i+1}: {q['correct_answer_text']}")
         
@@ -214,6 +228,7 @@ def post_mcq_answers():
         # Clear the state after posting answers
         save_quiz_state([])
         print("Successfully posted answers and cleared quiz state.")
+
 
 # --- Main Execution ---
 if __name__ == "__main__":
