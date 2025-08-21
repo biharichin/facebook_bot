@@ -73,3 +73,111 @@ def post_to_facebook_page(message):
         print(f"Error posting to Facebook: {e}")
         print(f"Response body: {e.response.text if e.response else 'No response'}")
         return None
+
+def send_daily_words_to_facebook(all_data):
+    """Sends 3 daily vocabulary words to Facebook."""
+    print("Attempting to send daily words to Facebook...")
+    daily_current_index = get_progress(DAILY_PROGRESS_FILE)
+    
+    words_to_send = []
+    for i in range(3):
+        if daily_current_index + i < len(all_data):
+            words_to_send.append(all_data[daily_current_index + i])
+        else:
+            # If we run out of words, reset for the next cycle
+            print("Reached end of vocabulary list for daily words. Resetting progress.")
+            daily_current_index = 0
+            save_progress(DAILY_PROGRESS_FILE, 0)
+            words_to_send.append(all_data[daily_current_index + i]) # Add from the beginning
+
+    if not words_to_send:
+        print("No words to send to Facebook for daily post.")
+        return
+
+    facebook_message_parts = []
+    for word_data in words_to_send:
+        word = word_data.get("Word", "").strip()
+        meaning = word_data.get("Meaning", "").strip()
+        synonyms = word_data.get("Synonyms", "").strip()
+        antonyms = word_data.get("Antonyms", "").strip()
+        example = word_data.get("Example Sentence", "").strip()
+
+        part = (
+            f"Word: {word}\n"
+            f"Meaning: {meaning}\n"
+            f"Synonyms: {synonyms}\n"
+            f"Antonyms: {antonyms}\n"
+            f"Example: {example}\n"
+        )
+        facebook_message_parts.append(part)
+
+    full_facebook_message = "\n---\n".join(facebook_message_parts)
+
+    result = post_to_facebook_page(full_facebook_message)
+    if result:
+        save_progress(DAILY_PROGRESS_FILE, daily_current_index + len(words_to_send))
+        print(f"Successfully sent {len(words_to_send)} words to Facebook. Next daily index: {daily_current_index + len(words_to_send)}")
+    else:
+        print("Failed to send daily words to Facebook.")
+
+def send_weekly_summary_to_facebook(all_data):
+    """Sends a weekly summary of learned words to Facebook."""
+    print("Attempting to send weekly summary to Facebook...")
+    weekly_current_index = get_progress(WEEKLY_PROGRESS_FILE)
+
+    # Calculate the start index for the last 21 words
+    # Handle cases where there aren't 21 words yet
+    start_index = max(0, weekly_current_index - 21)
+    
+    words_for_summary = all_data[start_index:weekly_current_index]
+
+    if not words_for_summary:
+        print("No words to summarize for the week.")
+        return
+
+    summary_message_parts = ["Weekly Vocabulary Summary:\n"]
+    for i, word_data in enumerate(words_for_summary):
+        word = word_data.get("Word", "").strip()
+        meaning = word_data.get("Meaning", "").strip()
+        summary_message_parts.append(f"{i+1}. {word}: {meaning}")
+
+    full_summary_message = "\n".join(summary_message_parts)
+
+    result = post_to_facebook_page(full_summary_message)
+    if result:
+        save_progress(WEEKLY_PROGRESS_FILE, weekly_current_index) # Progress is not incremented for summary, just marks it as sent
+        print(f"Successfully sent weekly summary to Facebook. Summarized {len(words_for_summary)} words.")
+    else:
+        print("Failed to send weekly summary to Facebook.")
+
+def main():
+    """Main function to run the bot."""
+    print("Bot starting...")
+    all_data = get_google_sheet_data()
+    if not all_data:
+        print("Could not fetch data. Exiting.")
+        return
+
+    now = datetime.now()
+    current_hour = now.hour
+    current_minute = now.minute
+    current_weekday = now.weekday() # Monday is 0, Sunday is 6
+
+    # Check if it's 7:00 AM IST for daily words
+    if current_hour == 7 and current_minute == 0:
+        print("It's 7:00 AM IST. Sending daily words to Facebook.")
+        send_daily_words_to_facebook(all_data)
+    else:
+        print(f"Current time is {current_hour:02d}:{current_minute:02d}. Not 7:00 AM IST for daily words.")
+
+    # Check if it's Sunday (weekday 6) and 9:00 AM IST for weekly summary
+    if current_weekday == 6 and current_hour == 9 and current_minute == 0:
+        print("It's Sunday 9:00 AM IST. Sending weekly summary to Facebook.")
+        send_weekly_summary_to_facebook(all_data)
+    else:
+        print(f"Current time is {current_hour:02d}:{current_minute:02d} on weekday {current_weekday}. Not Sunday 9:00 AM IST for weekly summary.")
+
+    print("Bot finished daily check.")
+
+if __name__ == "__main__":
+    main()
