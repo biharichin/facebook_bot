@@ -11,11 +11,17 @@ on:
         options:
         - daily_words
         - weekly_summary
+        - mcq_questions
+        - mcq_answers
   schedule:
-    # Runs every day at 7:00 AM IST (1:30 AM UTC)
+    # Daily words at 7:00 AM IST (1:30 UTC)
     - cron: '30 1 * * *'
-    # Runs every Sunday at 9:00 AM IST (3:30 AM UTC)
+    # Weekly summary at 9:00 AM IST on Sundays (3:30 UTC)
     - cron: '30 3 * * 0'
+    # MCQ questions at 4:00 PM IST (10:30 UTC)
+    - cron: '30 10 * * *'
+    # MCQ answers at 9:00 PM IST (15:30 UTC)
+    - cron: '30 15 * * *'
 
 jobs:
   build-and-post:
@@ -42,10 +48,14 @@ jobs:
       run: |
         if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
           echo "task=${{ github.event.inputs.task }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.schedule }}" == "30 1 * * *" ]]; then
+          echo "task=daily_words" >> $GITHUB_OUTPUT
         elif [[ "${{ github.event.schedule }}" == "30 3 * * 0" ]]; then
           echo "task=weekly_summary" >> $GITHUB_OUTPUT
-        else
-          echo "task=daily_words" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.schedule }}" == "30 10 * * *" ]]; then
+          echo "task=mcq_questions" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.schedule }}" == "30 15 * * *" ]]; then
+          echo "task=mcq_answers" >> $GITHUB_OUTPUT
         fi
 
     - name: Run Python Script
@@ -60,15 +70,11 @@ jobs:
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        if [ -f progress.json ]; then
-          git add progress.json
-          # Commit only if there are changes
-          if ! git diff --staged --quiet; then
-            git commit -m "Update word progress tracker"
-            git push
-          else
-            echo "No changes to progress.json to commit."
-          fi
+        git add progress.json quiz_state.json || true # Add both files, ignore if not found
+        # Commit only if there are changes
+        if ! git diff --staged --quiet; then
+          git commit -m "Update progress and quiz state"
+          git push
         else
-          echo "progress.json not found. Nothing to commit."
+          echo "No changes to progress files to commit."
         fi

@@ -1,10 +1,10 @@
-
 import os
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import requests
 import datetime
+import random
 
 # --- Configuration ---
 GOOGLE_SHEETS_CREDENTIALS_JSON = os.environ.get("GOOGLE_SHEETS_CREDENTIALS_JSON")
@@ -12,6 +12,7 @@ PAGE_ID = os.environ.get("PAGE_ID")
 PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
 GOOGLE_SHEET_NAME = "english vocab"
 PROGRESS_FILE = "progress.json"
+QUIZ_STATE_FILE = "quiz_state.json"
 
 # --- Google Sheets Setup ---
 def get_google_sheet():
@@ -39,6 +40,18 @@ def save_progress(progress):
     """Saves the current progress (index) to a file."""
     with open(PROGRESS_FILE, "w") as f:
         json.dump(progress, f)
+
+def get_quiz_state():
+    """Reads the current quiz state from a file."""
+    if os.path.exists(QUIZ_STATE_FILE):
+        with open(QUIZ_STATE_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+def save_quiz_state(state):
+    """Saves the current quiz state to a file."""
+    with open(QUIZ_STATE_FILE, "w") as f:
+        json.dump(state, f)
 
 # --- Facebook Posting ---
 def post_to_facebook_page(message):
@@ -98,7 +111,6 @@ def send_weekly_summary(all_data):
     progress = get_progress()
     current_index = progress.get("daily_index", 0)
 
-    # Get the last 21 words, or fewer if not enough have been posted
     start_index = max(0, current_index - 21)
     words_for_summary = all_data[start_index:current_index]
 
@@ -121,14 +133,90 @@ def send_weekly_summary(all_data):
         message_parts.append(part)
 
     full_message = "\n\n---\n\n".join(message_parts)
-
     post_to_facebook_page(full_message)
 
+def generate_and_post_mcqs(all_data):
+    """Generates and posts 9 MCQs based on the day's 3 words."""
+    print("Attempting to generate and post MCQs...")
+    progress = get_progress()
+    # The index points to the *next* set of words, so we subtract 3 to get the current set.
+    daily_index = progress.get("daily_index", 0) - 3
+    if daily_index < 0:
+        print("Not enough words have been posted to generate a quiz.")
+        return
+
+    words_for_quiz = all_data[daily_index : daily_index + 3]
+    
+    # Create a pool of potential wrong answers
+    distractor_pool = {
+        "Meaning": [d.get("Meaning") for d in all_data if d.get("Meaning")],
+        "Synonyms": [d.get("Synonyms") for d in all_data if d.get("Synonyms")],
+        "Antonyms": [d.get("Antonyms") for d in all_data if d.get("Antonyms")]
+    }
+
+    quiz_questions = []
+    question_number = 1
+    
+    for word_data in words_for_quiz:
+        word = word_data.get("Word")
+        # Question types: Meaning, Synonyms, Antonyms
+        for q_type in ["Meaning", "Synonyms", "Antonyms"]:
+            correct_answer = word_data.get(q_type)
+            if not correct_answer: continue
+
+            # Get 2 wrong answers
+            distractors = random.sample([
+                ans for ans in distractor_pool[q_type] if ans != correct_answer
+            ], 2)
+            
+            options = distractors + [correct_answer]
+            random.shuffle(options)
+            
+            quiz_questions.append({
+                "question_text": f"Q{question_number}: What is/are the {q_type.lower()} of \"{word}\"?",
+                "options": options,
+                "correct_answer_text": correct_answer
+            })
+            question_number += 1
+
+    if not quiz_questions:
+        print("Could not generate any quiz questions.")
+        return
+
+    # Format for Facebook post
+    post_parts = ["Here is your quiz!\n"]
+    for q in quiz_questions:
+        options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(q["options"])])
+        post_parts.append(f"{q['question_text']}\n{options_str}")
+    
+    full_message = "\n\n".join(post_parts)
+    
+    if post_to_facebook_page(full_message):
+        save_quiz_state(quiz_questions)
+        print("Successfully generated and posted quiz. State saved.")
+
+def post_mcq_answers():
+    """Posts the answers to the most recently generated quiz."""
+    print("Attempting to post MCQ answers...")
+    quiz_state = get_quiz_state()
+
+    if not quiz_state:
+        print("No quiz state found. Cannot post answers.")
+        return
+
+    post_parts = ["Here are the answers!\n"]
+    for i, q in enumerate(quiz_state):
+        post_parts.append(f"A{i+1}: {q['correct_answer_text']}")
+        
+    full_message = "\n".join(post_parts)
+    
+    if post_to_facebook_page(full_message):
+        # Clear the state after posting answers
+        save_quiz_state([])
+        print("Successfully posted answers and cleared quiz state.")
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    # This script will be triggered by GitHub Actions based on the day.
-    # We use an environment variable in the workflow to decide which function to run.
     task = os.environ.get("TASK")
     
     sheet_data = get_google_sheet()
@@ -138,5 +226,9 @@ if __name__ == "__main__":
             send_daily_words(sheet_data)
         elif task == "weekly_summary":
             send_weekly_summary(sheet_data)
+        elif task == "mcq_questions":
+            generate_and_post_mcqs(sheet_data)
+        elif task == "mcq_answers":
+            post_mcq_answers()
         else:
             print("No valid TASK environment variable set. Exiting.")
