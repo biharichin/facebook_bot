@@ -258,14 +258,14 @@ def main():
     current_weekday = now.weekday() # Monday is 0, Sunday is 6
 
     # Check if it's 7:00 AM IST for daily words
-    if current_hour == 7 and current_minute == 0:
+    if True: # TEMPORARY: For testing daily Telegram words
         print("It's 7:00 AM IST. Sending daily words to Telegram.")
         send_daily_words_to_telegram(all_data)
     else:
         print(f"Current time is {current_hour:02d}:{current_minute:02d}. Not 7:00 AM IST for daily words.")
 
     # Check if it's Sunday (weekday 6) and 9:00 AM IST for weekly summary
-    if current_weekday == 6 and current_hour == 9 and current_minute == 0:
+    if True: # TEMPORARY: For testing weekly Telegram summary
         print("It's Sunday 9:00 AM IST. Sending weekly summary to Telegram.")
         send_weekly_summary_to_telegram(all_data)
     else:
