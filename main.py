@@ -3,7 +3,8 @@ import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import requests
-import datetime
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import random
 
 # --- Configuration ---
@@ -14,7 +15,7 @@ GOOGLE_SHEET_NAME = "english vocab"
 PROGRESS_FILE = "progress.json"
 QUIZ_STATE_FILE = "quiz_state.json"
 
-# --- Text Formatting Utility ---
+# --- Utility Functions ---
 def to_bold(text):
     """Converts a string to bold Unicode characters."""
     normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -27,6 +28,14 @@ def to_bold(text):
         else:
             res += char
     return res
+
+def get_ist_timestamp():
+    """Returns the current date and time in IST, formatted for the post."""
+    utc_now = datetime.now(ZoneInfo("UTC"))
+    ist_now = utc_now.astimezone(ZoneInfo("Asia/Kolkata"))
+    date_str = ist_now.strftime("%d/%m/%Y")
+    time_str = ist_now.strftime("%H:%M:%S")
+    return f"Date: {date_str}\nTime: {time_str} (IST)"
 
 # --- Google Sheets Setup ---
 def get_google_sheet():
@@ -112,7 +121,8 @@ def send_daily_words(all_data):
         )
         message_parts.append(part)
 
-    full_message = "\n\n---\n\n".join(message_parts)
+    timestamp = get_ist_timestamp()
+    full_message = f"{timestamp}\n\n---\n\n" + "\n\n---\n\n".join(message_parts)
     
     if post_to_facebook_page(full_message):
         progress["daily_index"] = daily_index + len(words_to_send)
@@ -146,7 +156,8 @@ def send_weekly_summary(all_data):
         )
         message_parts.append(part)
 
-    full_message = "\n\n---\n\n".join(message_parts)
+    timestamp = get_ist_timestamp()
+    full_message = f"{timestamp}\n\n---\n\n" + "\n\n---\n\n".join(message_parts)
     post_to_facebook_page(full_message)
 
 def generate_and_post_mcqs(all_data):
@@ -198,12 +209,13 @@ def generate_and_post_mcqs(all_data):
         return
 
     # Format for Facebook post
-    post_parts = [to_bold("Here is your quiz!") + "\n"]
+    post_parts = [to_bold("Here is your quiz!")]
     for q in quiz_questions:
         options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(q["options"])])
         post_parts.append(f"{q['question_text']}\n{options_str}")
     
-    full_message = "\n\n".join(post_parts)
+    timestamp = get_ist_timestamp()
+    full_message = f"{timestamp}\n\n" + "\n\n".join(post_parts)
     
     if post_to_facebook_page(full_message):
         save_quiz_state(quiz_questions)
@@ -218,16 +230,18 @@ def post_mcq_answers():
         print("No quiz state found. Cannot post answers.")
         return
 
-    post_parts = [to_bold("Here are the answers!") + "\n"]
+    post_parts = [to_bold("Here are the answers!")]
     for i, q in enumerate(quiz_state):
         post_parts.append(f"A{i+1}: {q['correct_answer_text']}")
         
-    full_message = "\n".join(post_parts)
+    timestamp = get_ist_timestamp()
+    full_message = f"{timestamp}\n\n" + "\n".join(post_parts)
     
     if post_to_facebook_page(full_message):
         # Clear the state after posting answers
         save_quiz_state([])
         print("Successfully posted answers and cleared quiz state.")
+
 
 
 # --- Main Execution ---
