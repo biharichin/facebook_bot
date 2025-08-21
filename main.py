@@ -113,11 +113,11 @@ def send_daily_words(all_data):
     for i, word_data in enumerate(words_to_send):
         word_number = daily_index + i + 1
         part = (
-            f"{word_number}. Word: {word_data.get('Word', '')}\n"
-            f"Meaning: {word_data.get('Meaning', '')}\n"
-            f"Synonyms: {word_data.get('Synonyms', '')}\n"
-            f"Antonyms: {word_data.get('Antonyms', '')}\n"
-            f"Example: {word_data.get('Example Sentence', '')}"
+            f"{to_bold(str(word_number) + '. Word:')} {word_data.get('Word', '')}\n"
+            f"{to_bold('Meaning:')} {word_data.get('Meaning', '')}\n"
+            f"{to_bold('Synonyms:')} {word_data.get('Synonyms', '')}\n"
+            f"{to_bold('Antonyms:')} {word_data.get('Antonyms', '')}\n"
+            f"{to_bold('Example:')} {word_data.get('Example Sentence', '')}"
         )
         message_parts.append(part)
 
@@ -143,22 +143,23 @@ def send_weekly_summary(all_data):
         return
 
     summary_header = f"--- Weekly Vocabulary Summary: Words {start_index + 1} to {current_index} ---"
-    message_parts = [summary_header]
+    message_parts = [to_bold(summary_header)]
 
     for i, word_data in enumerate(words_for_summary):
         word_number = start_index + i + 1
         part = (
-            f"{word_number}. Word: {word_data.get('Word', '')}\n"
-            f"Meaning: {word_data.get('Meaning', '')}\n"
-            f"Synonyms: {word_data.get('Synonyms', '')}\n"
-            f"Antonyms: {word_data.get('Antonyms', '')}\n"
-            f"Example: {word_data.get('Example Sentence', '')}"
+            f"{to_bold(str(word_number) + '. Word:')} {word_data.get('Word', '')}\n"
+            f"{to_bold('Meaning:')} {word_data.get('Meaning', '')}\n"
+            f"{to_bold('Synonyms:')} {word_data.get('Synonyms', '')}\n"
+            f"{to_bold('Antonyms:')} {word_data.get('Antonyms', '')}\n"
+            f"{to_bold('Example:')} {word_data.get('Example Sentence', '')}"
         )
         message_parts.append(part)
 
     timestamp = get_ist_timestamp()
     full_message = f"{timestamp}\n\n---\n\n" + "\n\n---\n\n".join(message_parts)
     post_to_facebook_page(full_message)
+
 
 def generate_and_post_mcqs(all_data):
     """Generates and posts 9 MCQs based on the day's 3 words."""
