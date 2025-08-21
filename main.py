@@ -92,24 +92,34 @@ def send_daily_words(all_data):
         print(f"Successfully sent {len(words_to_send)} words. Next index: {progress['daily_index']}")
 
 def send_weekly_summary(all_data):
-    """Sends a summary of the last 21 words to Facebook."""
+    """Sends a summary of the last 21 words to Facebook in the full format."""
     print("Attempting to send weekly summary...")
     progress = get_progress()
     current_index = progress.get("daily_index", 0)
-    
+
     # Get the last 21 words, or fewer if not enough have been posted
-    start_index = max(0, current_index - 21)
+    start_index = max(0, current_index - 9) # Changed to 9 to reflect the 3x daily posts
     words_for_summary = all_data[start_index:current_index]
 
     if not words_for_summary:
         print("Not enough words posted yet for a weekly summary.")
         return
 
-    summary_header = f"Weekly Vocabulary Summary: Words {start_index + 1} to {current_index}"
-    word_list = [f"- {word_data.get('Word', '')}" for word_data in words_for_summary]
-    
-    full_message = f"{summary_header}\n\n" + "\n".join(word_list)
-    
+    summary_header = f"--- Weekly Vocabulary Summary: Words {start_index + 1} to {current_index} ---"
+    message_parts = [summary_header]
+
+    for word_data in words_for_summary:
+        part = (
+            f"Word: {word_data.get('Word', '')}\n"
+            f"Meaning: {word_data.get('Meaning', '')}\n"
+            f"Synonyms: {word_data.get('Synonyms', '')}\n"
+            f"Antonyms: {word_data.get('Antonyms', '')}\n"
+            f"Example: {word_data.get('Example Sentence', '')}"
+        )
+        message_parts.append(part)
+
+    full_message = "\n\n---\n\n".join(message_parts)
+
     post_to_facebook_page(full_message)
 
 # --- Main Execution ---
