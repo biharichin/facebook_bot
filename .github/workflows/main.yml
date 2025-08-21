@@ -1,7 +1,16 @@
 name: Post to Facebook Page
 
 on:
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Which task to run'
+        required: true
+        default: 'daily_words'
+        type: choice
+        options:
+        - daily_words
+        - weekly_summary
   schedule:
     # Runs every day at 7:00 AM IST (1:30 AM UTC)
     - cron: '30 1 * * *'
@@ -11,6 +20,8 @@ on:
 jobs:
   build-and-post:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grant write permission to commit progress
 
     steps:
     - name: Check out the repository
@@ -29,7 +40,9 @@ jobs:
     - name: Determine Task
       id: task_determiner
       run: |
-        if [[ "${{ github.event.schedule }}" == "30 3 * * 0" ]]; then
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "task=${{ github.event.inputs.task }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.schedule }}" == "30 3 * * 0" ]]; then
           echo "task=weekly_summary" >> $GITHUB_OUTPUT
         else
           echo "task=daily_words" >> $GITHUB_OUTPUT
