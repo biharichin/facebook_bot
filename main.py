@@ -74,9 +74,10 @@ def send_daily_words(all_data):
 
 
     message_parts = []
-    for word_data in words_to_send:
+    for i, word_data in enumerate(words_to_send):
+        word_number = daily_index + i + 1
         part = (
-            f"Word: {word_data.get('Word', '')}\n"
+            f"{word_number}. Word: {word_data.get('Word', '')}\n"
             f"Meaning: {word_data.get('Meaning', '')}\n"
             f"Synonyms: {word_data.get('Synonyms', '')}\n"
             f"Antonyms: {word_data.get('Antonyms', '')}\n"
@@ -98,7 +99,7 @@ def send_weekly_summary(all_data):
     current_index = progress.get("daily_index", 0)
 
     # Get the last 21 words, or fewer if not enough have been posted
-    start_index = max(0, current_index - 9) # Changed to 9 to reflect the 3x daily posts
+    start_index = max(0, current_index - 21)
     words_for_summary = all_data[start_index:current_index]
 
     if not words_for_summary:
@@ -108,9 +109,10 @@ def send_weekly_summary(all_data):
     summary_header = f"--- Weekly Vocabulary Summary: Words {start_index + 1} to {current_index} ---"
     message_parts = [summary_header]
 
-    for word_data in words_for_summary:
+    for i, word_data in enumerate(words_for_summary):
+        word_number = start_index + i + 1
         part = (
-            f"Word: {word_data.get('Word', '')}\n"
+            f"{word_number}. Word: {word_data.get('Word', '')}\n"
             f"Meaning: {word_data.get('Meaning', '')}\n"
             f"Synonyms: {word_data.get('Synonyms', '')}\n"
             f"Antonyms: {word_data.get('Antonyms', '')}\n"
@@ -121,6 +123,7 @@ def send_weekly_summary(all_data):
     full_message = "\n\n---\n\n".join(message_parts)
 
     post_to_facebook_page(full_message)
+
 
 # --- Main Execution ---
 if __name__ == "__main__":
