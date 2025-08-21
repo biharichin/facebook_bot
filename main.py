@@ -121,12 +121,6 @@ def generate_question(word_data, all_data):
     """Generates a random question string from the word data."""
     question_type = random.choice(["meaning_mcq", "synonym_mcq", "antonym_mcq", "unscramble"])
     word = word_data.get("Word", "").strip()
-
-    # Get current date and time
-    now = datetime.now()
-    current_datetime_str = now.strftime("%Y-%m-%d %H:%M:%S IST") # Format as YYYY-MM-DD HH:MM:SS IST
-
-    common_suffix = "\n\n#ielts #govt_exam #group_d_exam\n\nAnswer would be published evening 5:00 PM IST."
     
     if question_type == "meaning_mcq":
         correct_answer = word_data.get("Meaning", "").strip()
@@ -139,7 +133,7 @@ def generate_question(word_data, all_data):
         
         shuffled_options = random.sample(list(options), len(options))
         options_str = "\n".join([f"  {chr(65+i)}) {opt}" for i, opt in enumerate(shuffled_options)])
-        return f"Date & Time: {current_datetime_str}\n\nWhat is the meaning of '{word}'?\n\n{options_str}\n\n#Vocabulary #EnglishQuiz{common_suffix}"
+        return f"What is the meaning of '{word}'?\n\n{options_str}\n\n#Vocabulary #EnglishQuiz"
 
     elif question_type == "synonym_mcq":
         correct_answer = word_data.get("Synonyms", "").strip()
@@ -152,7 +146,7 @@ def generate_question(word_data, all_data):
 
         shuffled_options = random.sample(list(options), len(options))
         options_str = "\n".join([f"  {chr(65+i)}) {opt}" for i, opt in enumerate(shuffled_options)])
-        return f"Date & Time: {current_datetime_str}\n\nWhat are the synonyms of '{word}'?\n\n{options_str}\n\n#Vocabulary #Synonyms{common_suffix}"
+        return f"What are the synonyms of '{word}'?\n\n{options_str}\n\n#Vocabulary #Synonyms"
 
     elif question_type == "antonym_mcq":
         correct_answer = word_data.get("Antonyms", "").strip()
@@ -165,13 +159,13 @@ def generate_question(word_data, all_data):
 
         shuffled_options = random.sample(list(options), len(options))
         options_str = "\n".join([f"  {chr(65+i)}) {opt}" for i, opt in enumerate(shuffled_options)])
-        return f"Date & Time: {current_datetime_str}\n\nWhat are the antonyms of '{word}'?\n\n{options_str}\n\n#Vocabulary #Antonyms{common_suffix}"
+        return f"What are the antonyms of '{word}'?\n\n{options_str}\n\n#Vocabulary #Antonyms"
 
     elif question_type == "unscramble":
         scrambled_word = "".join(random.sample(word, len(word)))
-        return f"Date & Time: {current_datetime_str}\n\nUnscramble the letters to find the correct word:\n\n{scrambled_word}\n\n#Vocabulary #Unscramble{common_suffix}"
+        return f"Unscramble the letters to find the correct word:\n\n{scrambled_word}\n\n#Vocabulary #Unscramble"
 
-    return f"Date & Time: {current_datetime_str}\n\nLet's learn a new word: {word}\nMeaning: {word_data.get('Meaning', '')}{common_suffix}"
+    return f"Let's learn a new word: {word}\nMeaning: {word_data.get('Meaning', '')}"
 
 def send_daily_words_to_telegram(all_data):
     """Sends 3 daily vocabulary words to Telegram."""
