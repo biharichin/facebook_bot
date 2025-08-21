@@ -80,7 +80,7 @@ def generate_question(word_data, all_data):
     now = datetime.now()
     current_datetime_str = now.strftime("%Y-%m-%d %H:%M:%S IST") # Format as YYYY-MM-DD HH:MM:SS IST
 
-    common_suffix = f"\n\n#ielts #govt_exam #group_d_exam\n\nAnswer would be published evening 5:00 PM IST."
+    common_suffix = "\n\n#ielts #govt_exam #group_d_exam\n\nAnswer would be published evening 5:00 PM IST."
     
     if question_type == "meaning_mcq":
         correct_answer = word_data.get("Meaning", "").strip()
@@ -126,7 +126,6 @@ def generate_question(word_data, all_data):
         return f"Date & Time: {current_datetime_str}\n\nUnscramble the letters to find the correct word:\n\n{scrambled_word}\n\n#Vocabulary #Unscramble{common_suffix}"
 
     return f"Date & Time: {current_datetime_str}\n\nLet's learn a new word: {word}\nMeaning: {word_data.get('Meaning', '')}{common_suffix}"
-"
 
 def main():
     """Main function to run the bot."""
