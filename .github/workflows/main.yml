@@ -26,18 +26,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Determine Task and Run Script
+    - name: Determine Task
+      id: task_determiner
+      run: |
+        if [[ "${{ github.event.schedule }}" == "30 3 * * 0" ]]; then
+          echo "task=weekly_summary" >> $GITHUB_OUTPUT
+        else
+          echo "task=daily_words" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run Python Script
       env:
         GOOGLE_SHEETS_CREDENTIALS_JSON: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS_JSON }}
         PAGE_ID: ${{ secrets.PAGE_ID }}
         PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
-      run: |
-        if [[ "${{ github.event.schedule }}" == "30 3 * * 0" ]]; then
-          echo "TASK=weekly_summary" >> $GITHUB_ENV
-        else
-          echo "TASK=daily_words" >> $GITHUB_ENV
-        fi
-        python main.py
+        TASK: ${{ steps.task_determiner.outputs.task }}
+      run: python main.py
 
     - name: Commit and push progress
       run: |
