@@ -77,18 +77,13 @@ def post_to_facebook_page(message):
 def send_daily_words_to_facebook(all_data):
     """Sends 3 daily vocabulary words to Facebook."""
     print("Attempting to send daily words to Facebook...")
-    daily_current_index = get_progress(DAILY_PROGRESS_FILE)
-    
+    current_start_index = get_progress(DAILY_PROGRESS_FILE) # Use a clearer name
+
     words_to_send = []
+    # Calculate the actual words to send, handling wrap-around
     for i in range(3):
-        if daily_current_index + i < len(all_data):
-            words_to_send.append(all_data[daily_current_index + i])
-        else:
-            # If we run out of words, reset for the next cycle
-            print("Reached end of vocabulary list for daily words. Resetting progress.")
-            daily_current_index = 0
-            save_progress(DAILY_PROGRESS_FILE, 0)
-            words_to_send.append(all_data[daily_current_index + i]) # Add from the beginning
+        index_to_fetch = (current_start_index + i) % len(all_data) # Use modulo for continuous cycling
+        words_to_send.append(all_data[index_to_fetch])
 
     if not words_to_send:
         print("No words to send to Facebook for daily post.")
@@ -115,8 +110,10 @@ def send_daily_words_to_facebook(all_data):
 
     result = post_to_facebook_page(full_facebook_message)
     if result:
-        save_progress(DAILY_PROGRESS_FILE, daily_current_index + len(words_to_send))
-        print(f"Successfully sent {len(words_to_send)} words to Facebook. Next daily index: {daily_current_index + len(words_to_send)}")
+        # Calculate the next starting index
+        next_start_index = (current_start_index + len(words_to_send)) % len(all_data)
+        save_progress(DAILY_PROGRESS_FILE, next_start_index)
+        print(f"Successfully sent {len(words_to_send)} words to Facebook. Next daily index: {next_start_index}")
     else:
         print("Failed to send daily words to Facebook.")
 
